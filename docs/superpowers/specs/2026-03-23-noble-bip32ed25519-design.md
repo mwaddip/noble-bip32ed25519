@@ -20,7 +20,7 @@ Two layers, two source files:
 
 All BIP32-Ed25519 math as pure functions (`Uint8Array` in, `Uint8Array` out):
 
-- `rootKeyFromEntropy(entropy: Uint8Array): { kL, kR, chainCode }` — PBKDF2-HMAC-SHA512 (password=entropy, salt=empty, iterations=4096, dkLen=96), then clamp kL. Accepted entropy lengths: 16, 20, 24, 28, or 32 bytes (BIP39 128-256 bits)
+- `rootKeyFromEntropy(entropy: Uint8Array): { kL, kR, chainCode }` — PBKDF2-HMAC-SHA512 (password=empty, salt=entropy, iterations=4096, dkLen=96), then clamp kL. Accepted entropy lengths: 16, 20, 24, 28, or 32 bytes (BIP39 128-256 bits)
 - `deriveChildHardened(key, index)` — HMAC-SHA512 with `0x00 || kL || kR || index_LE`, scalar addition for child kL/kR
 - `deriveChildSoft(key, index)` — HMAC-SHA512 with `0x02 || pubKey || index_LE`, scalar + point addition
 - `deriveChildSoftPublic(pubKey, chainCode, index)` — Public-only soft derivation (point math only, no private key)
