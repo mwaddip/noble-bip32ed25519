@@ -22,9 +22,11 @@ export interface BIP32PublicKey {
   chainCode: Uint8Array;
 }
 
-// --- Internal helpers ---
+// --- Helpers (exported for sodium shim) ---
 
-function bytesToScalar(bytes: Uint8Array): bigint {
+export { L, ExtendedPoint, sha512, hmac, blake2b, ed25519, concat };
+
+export function bytesToScalar(bytes: Uint8Array): bigint {
   let n = 0n;
   for (let i = bytes.length - 1; i >= 0; i--) {
     n = (n << 8n) | BigInt(bytes[i]);
@@ -32,7 +34,7 @@ function bytesToScalar(bytes: Uint8Array): bigint {
   return n;
 }
 
-function scalarToBytes(n: bigint, length: number): Uint8Array {
+export function scalarToBytes(n: bigint, length: number): Uint8Array {
   const bytes = new Uint8Array(length);
   for (let i = 0; i < length; i++) {
     bytes[i] = Number(n & 0xffn);
