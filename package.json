@@ -9,6 +9,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./sodium": {
+      "import": "./dist/sodium-shim.js",
+      "types": "./dist/sodium-shim.d.ts"
     }
   },
   "scripts": {
@@ -26,6 +30,7 @@
   "devDependencies": {
     "@stricahq/bip32ed25519": "^1.1.0",
     "bip39": "^3.1.0",
+    "libsodium-wrappers-sumo": "^0.8.2",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },

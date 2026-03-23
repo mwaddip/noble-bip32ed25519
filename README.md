@@ -78,6 +78,40 @@ All methods are **synchronous**. All byte values are **`Uint8Array`**.
 
 The API shape is nearly identical. The main differences: `fromEntropy()` is synchronous (no `await`), all byte types are `Uint8Array` instead of `Buffer` (use `Uint8Array.from(buffer)` / `Buffer.from(uint8array)` at boundaries if needed), and `toPublicKey()` on `Bip32PrivateKey` is replaced by `toBip32PublicKey()` which returns a `Bip32PublicKey` capable of soft derivation — call `.toPublicKey()` on that if you just need the raw public key. The derivation paths, key bytes, signatures, and hashes are byte-identical to the libsodium-based implementation.
 
+## libsodium shim
+
+For projects that depend on `libsodium-wrappers-sumo` transitively (e.g., via `@cardano-sdk/crypto`), this package provides a drop-in shim that implements the 12 libsodium functions the Cardano JS ecosystem actually uses:
+
+```typescript
+import sodium from 'noble-bip32ed25519/sodium';
+
+await sodium.ready; // resolves immediately — no WASM to load
+sodium.crypto_sign_detached(message, secretKey);
+```
+
+Use it via bundler aliases to eliminate libsodium from your build:
+
+```bash
+# esbuild
+esbuild --alias:libsodium-wrappers-sumo=noble-bip32ed25519/sodium ...
+
+# webpack (resolve.alias)
+{ 'libsodium-wrappers-sumo': 'noble-bip32ed25519/sodium' }
+```
+
+Or via `package.json` imports map:
+```json
+{
+  "imports": {
+    "libsodium-wrappers-sumo": "noble-bip32ed25519/sodium"
+  }
+}
+```
+
+Implemented functions: `crypto_auth_hmacsha512`, `crypto_hash_sha512`, `crypto_generichash`, `crypto_scalarmult_ed25519_base_noclamp`, `crypto_core_ed25519_add`, `crypto_core_ed25519_scalar_add`, `crypto_core_ed25519_scalar_mul`, `crypto_core_ed25519_scalar_reduce`, `crypto_sign_detached`, `crypto_sign_seed_keypair`, `crypto_sign_verify_detached`, `ready`.
+
+All functions are tested against actual `libsodium-wrappers-sumo` for byte-identical output.
+
 ## How it works
 
 `@stricahq/bip32ed25519` uses three libsodium functions. This library replaces them with `@noble/curves` equivalents:
