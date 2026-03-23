@@ -74,7 +74,7 @@ export function rootKeyFromEntropy(entropy: Uint8Array): BIP32Key {
     );
   }
 
-  const raw = pbkdf2(sha512, entropy, new Uint8Array(0), {
+  const raw = pbkdf2(sha512, new Uint8Array(0), entropy, {
     c: 4096,
     dkLen: 96,
   });

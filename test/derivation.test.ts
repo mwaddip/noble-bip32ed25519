@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import * as bip39 from 'bip39';
+import { Bip32PrivateKey as StricaBip32PrivateKey } from '@stricahq/bip32ed25519';
 import {
   rootKeyFromEntropy,
   publicKeyFromPrivate,
@@ -330,5 +332,92 @@ describe('PublicKey', () => {
     const pub = root.toPrivateKey().toPublicKey();
     const h = pub.hash();
     expect(h.length).toBe(28);
+  });
+});
+
+describe('cross-library verification against @stricahq/bip32ed25519', () => {
+  const mnemonic =
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+  const entropy = Uint8Array.from(bip39.mnemonicToEntropy(mnemonic).match(/.{2}/g)!.map(b => parseInt(b, 16)));
+  const message = new TextEncoder().encode('test message for signing');
+
+  const HARDENED = 0x80000000;
+
+  function deriveNoble(entropy: Uint8Array) {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const account = root
+      .derive(HARDENED + 1852)
+      .derive(HARDENED + 1815)
+      .derive(HARDENED + 0);
+    const paymentKey = account.derive(0).derive(0);
+    const stakeKey = account.derive(2).derive(0);
+    return { root, account, paymentKey, stakeKey };
+  }
+
+  async function deriveStrica(entropy: Uint8Array) {
+    const root = await StricaBip32PrivateKey.fromEntropy(Buffer.from(entropy));
+    const account = root
+      .derive(HARDENED + 1852)
+      .derive(HARDENED + 1815)
+      .derive(HARDENED + 0);
+    const paymentKey = account.derive(0).derive(0);
+    const stakeKey = account.derive(2).derive(0);
+    return { root, account, paymentKey, stakeKey };
+  }
+
+  it('root key private key bytes match', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const nobleBytes = noble.root.toPrivateKey().toBytes();
+    const stricaBytes = strica.root.toPrivateKey().toBytes();
+    expect(nobleBytes).toEqual(new Uint8Array(stricaBytes));
+  });
+
+  it('payment key public key bytes match', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const noblePub = noble.paymentKey.toPrivateKey().toPublicKey().toBytes();
+    const stricaPub = strica.paymentKey.toBip32PublicKey().toPublicKey().toBytes();
+    expect(noblePub).toEqual(new Uint8Array(stricaPub));
+  });
+
+  it('stake key public key bytes match', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const noblePub = noble.stakeKey.toPrivateKey().toPublicKey().toBytes();
+    const stricaPub = strica.stakeKey.toBip32PublicKey().toPublicKey().toBytes();
+    expect(noblePub).toEqual(new Uint8Array(stricaPub));
+  });
+
+  it('public key hashes match', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const nobleHash = noble.paymentKey.toPrivateKey().toPublicKey().hash();
+    const stricaHash = strica.paymentKey.toBip32PublicKey().toPublicKey().hash();
+    expect(nobleHash).toEqual(new Uint8Array(stricaHash));
+  });
+
+  it('signatures match', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const nobleSig = noble.paymentKey.toPrivateKey().sign(message);
+    const stricaSig = strica.paymentKey.toPrivateKey().sign(Buffer.from(message));
+    expect(nobleSig).toEqual(new Uint8Array(stricaSig));
+  });
+
+  it('noble signature verifies with strica public key', async () => {
+    const noble = deriveNoble(entropy);
+    const strica = await deriveStrica(entropy);
+    const sig = noble.paymentKey.toPrivateKey().sign(message);
+    const stricaPub = strica.paymentKey.toBip32PublicKey().toPublicKey();
+    expect(stricaPub.verify(Buffer.from(sig), Buffer.from(message))).toBe(true);
+  });
+
+  it('public-only derivation matches private derivation', () => {
+    const noble = deriveNoble(entropy);
+    const accountBip32Pub = noble.account.toBip32PublicKey();
+    const paymentPubOnly = accountBip32Pub.derive(0).derive(0);
+    const paymentPubFromPriv = noble.paymentKey.toPrivateKey().toPublicKey();
+    expect(paymentPubOnly.toPublicKey().toBytes()).toEqual(paymentPubFromPriv.toBytes());
   });
 });
