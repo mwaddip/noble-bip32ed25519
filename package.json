@@ -13,6 +13,9 @@
   },
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -26,6 +29,24 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "bip32",
+    "ed25519",
+    "cardano",
+    "key-derivation",
+    "noble",
+    "cryptocurrency"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mwaddip/noble-bip32ed25519.git"
+  },
+  "engines": {
+    "node": ">=16"
+  },
   "license": "MIT"
 }
