@@ -227,3 +227,108 @@ describe('hashPublicKey', () => {
     expect(hashPublicKey(pub)).toEqual(hashPublicKey(pub));
   });
 });
+
+import { Bip32PrivateKey, Bip32PublicKey, PrivateKey, PublicKey } from '../src/index.js';
+
+describe('Bip32PrivateKey', () => {
+  const entropy = new Uint8Array([
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  ]);
+
+  it('creates from entropy', () => {
+    const key = Bip32PrivateKey.fromEntropy(entropy);
+    expect(key).toBeInstanceOf(Bip32PrivateKey);
+  });
+
+  it('derives hardened children', () => {
+    const key = Bip32PrivateKey.fromEntropy(entropy);
+    const child = key.derive(0x80000000 + 1852);
+    expect(child).toBeInstanceOf(Bip32PrivateKey);
+  });
+
+  it('derives soft children', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const account = root
+      .derive(0x80000000 + 1852)
+      .derive(0x80000000 + 1815)
+      .derive(0x80000000);
+    const child = account.derive(0);
+    expect(child).toBeInstanceOf(Bip32PrivateKey);
+  });
+
+  it('converts to PrivateKey', () => {
+    const key = Bip32PrivateKey.fromEntropy(entropy);
+    const priv = key.toPrivateKey();
+    expect(priv).toBeInstanceOf(PrivateKey);
+    expect(priv.toBytes().length).toBe(64);
+  });
+
+  it('converts to Bip32PublicKey', () => {
+    const key = Bip32PrivateKey.fromEntropy(entropy);
+    const bip32pub = key.toBip32PublicKey();
+    expect(bip32pub).toBeInstanceOf(Bip32PublicKey);
+  });
+});
+
+describe('Bip32PublicKey', () => {
+  const entropy = new Uint8Array([
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  ]);
+
+  it('derives soft children', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const account = root
+      .derive(0x80000000 + 1852)
+      .derive(0x80000000 + 1815)
+      .derive(0x80000000);
+    const bip32pub = account.toBip32PublicKey();
+    const child = bip32pub.derive(0);
+    expect(child).toBeInstanceOf(Bip32PublicKey);
+  });
+
+  it('throws on hardened derivation', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const bip32pub = root.toBip32PublicKey();
+    expect(() => bip32pub.derive(0x80000000)).toThrow();
+  });
+
+  it('converts to PublicKey', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const pub = root.toBip32PublicKey().toPublicKey();
+    expect(pub).toBeInstanceOf(PublicKey);
+    expect(pub.toBytes().length).toBe(32);
+  });
+});
+
+describe('PrivateKey', () => {
+  const entropy = new Uint8Array([
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  ]);
+  const message = new TextEncoder().encode('hello cardano');
+
+  it('signs and PublicKey verifies', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const priv = root.toPrivateKey();
+    const pub = priv.toPublicKey();
+    const sig = priv.sign(message);
+    expect(sig.length).toBe(64);
+    expect(pub.verify(message, sig)).toBe(true);
+  });
+});
+
+describe('PublicKey', () => {
+  const entropy = new Uint8Array([
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+  ]);
+
+  it('hash returns 28 bytes', () => {
+    const root = Bip32PrivateKey.fromEntropy(entropy);
+    const pub = root.toPrivateKey().toPublicKey();
+    const h = pub.hash();
+    expect(h.length).toBe(28);
+  });
+});
