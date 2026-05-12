@@ -118,7 +118,7 @@ All functions are tested against actual `libsodium-wrappers-sumo` for byte-ident
 
 | libsodium | noble |
 |---|---|
-| `crypto_scalarmult_ed25519_base_noclamp` | `ExtendedPoint.BASE.multiply(scalar)` |
+| `crypto_scalarmult_ed25519_base_noclamp` | `ed25519.Point.BASE.multiply(scalar)` |
 | `crypto_core_ed25519_scalar_add` | 256-bit little-endian integer addition |
 | `crypto_core_ed25519_add` | `point1.add(point2)` |
 

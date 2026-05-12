@@ -1,6 +1,6 @@
 {
   "name": "@mwaddip/noble-bip32ed25519",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pure TypeScript BIP32-Ed25519 key derivation using @noble/curves",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,14 +24,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@noble/curves": "^1.8.0",
-    "@noble/hashes": "^1.7.0"
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0"
   },
   "devDependencies": {
     "@stricahq/bip32ed25519": "^1.1.0",
     "bip39": "^3.1.0",
     "libsodium-wrappers-sumo": "^0.8.2",
-    "typescript": "^5.7.0",
+    "typescript": "^6.0.3",
     "vitest": "^3.0.0"
   },
   "files": [

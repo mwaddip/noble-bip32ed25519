@@ -1,10 +1,12 @@
-import { pbkdf2 } from '@noble/hashes/pbkdf2';
-import { sha512 } from '@noble/hashes/sha512';
-import { hmac } from '@noble/hashes/hmac';
-import { blake2b } from '@noble/hashes/blake2b';
-import { ed25519 } from '@noble/curves/ed25519';
+import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
+import { sha512 } from '@noble/hashes/sha2.js';
+import { hmac } from '@noble/hashes/hmac.js';
+import { blake2b } from '@noble/hashes/blake2.js';
+import { ed25519 } from '@noble/curves/ed25519.js';
 
-const ExtendedPoint = ed25519.ExtendedPoint;
+// noble v2 renamed ExtendedPoint → Point. Keep the local alias name to minimise
+// downstream diff; the API surface used here (BASE, multiply, fromHex) is unchanged.
+const ExtendedPoint = ed25519.Point;
 
 // Ed25519 group order
 const L = 2n ** 252n + 27742317777372353535851937790883648493n;
@@ -97,7 +99,7 @@ export function publicKeyFromPrivate(kL: Uint8Array): Uint8Array {
   // Clamped kL can exceed curve order L (bit 254 set ≈ 2^254, L ≈ 2^252).
   // Reduce mod L before multiply() — mathematically equivalent since G has order L.
   const scalar = bytesToScalar(kL) % L;
-  return ExtendedPoint.BASE.multiply(scalar).toRawBytes();
+  return ExtendedPoint.BASE.multiply(scalar).toBytes();
 }
 
 export function deriveChildHardened(key: BIP32Key, index: number): BIP32Key {
@@ -170,9 +172,9 @@ export function deriveChildSoftPublic(
   // childPubKey = (8 * zL) * G + pubKey
   const zLScalar = bytesToScalar(zL) * 8n;
   const zLPoint = ExtendedPoint.BASE.multiply(zLScalar);
-  const parentPoint = ExtendedPoint.fromHex(pubKey);
+  const parentPoint = ExtendedPoint.fromBytes(pubKey);
   const childPoint = zLPoint.add(parentPoint);
-  const childPubKey = childPoint.toRawBytes();
+  const childPubKey = childPoint.toBytes();
 
   const childChainCode = c.slice(32, 64);
 
@@ -192,7 +194,7 @@ export function sign(
 
   // R = r * G
   const R = ExtendedPoint.BASE.multiply(r);
-  const RBytes = R.toRawBytes();
+  const RBytes = R.toBytes();
 
   // hram = SHA-512(R || pubKey || message) mod L
   const hramHash = sha512(concat(RBytes, pubKey, message));

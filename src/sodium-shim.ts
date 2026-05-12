@@ -37,11 +37,11 @@ function crypto_scalarmult_ed25519_base_noclamp(
   const clamped = new Uint8Array(scalar);
   clamped[31] &= 0x7f;
   const s = bytesToScalar(clamped) % L;
-  return ExtendedPoint.BASE.multiply(s).toRawBytes();
+  return ExtendedPoint.BASE.multiply(s).toBytes();
 }
 
 function crypto_core_ed25519_add(p: Uint8Array, q: Uint8Array): Uint8Array {
-  return ExtendedPoint.fromHex(p).add(ExtendedPoint.fromHex(q)).toRawBytes();
+  return ExtendedPoint.fromBytes(p).add(ExtendedPoint.fromBytes(q)).toBytes();
 }
 
 function crypto_core_ed25519_scalar_add(
