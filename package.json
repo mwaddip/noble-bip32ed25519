@@ -1,6 +1,6 @@
 {
-  "name": "noble-bip32ed25519",
-  "version": "0.1.0",
+  "name": "@mwaddip/noble-bip32ed25519",
+  "version": "0.1.1",
   "description": "Pure TypeScript BIP32-Ed25519 key derivation using @noble/curves",
   "type": "module",
   "main": "./dist/index.js",
